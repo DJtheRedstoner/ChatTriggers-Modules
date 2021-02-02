@@ -30,6 +30,8 @@ settings.setCommand("fliptracker");
 Setting.register(settings);
 
 register("renderOverlay", () => {
+    if (!settings.getSetting("FlipTracker", "Show")) return;
+
     const x = (Renderer.screen.getWidth() / 1000) * settings.getSetting("FlipTracker", "X Position");
     const y = (Renderer.screen.getHeight() / 1000) * settings.getSetting("FlipTracker", "Y Position");
 
@@ -39,6 +41,8 @@ register("renderOverlay", () => {
 });
 
 register("chat", event => {
+    if (!settings.getSetting("FlipTracker", "Track")) return;
+
     const message = EnumChatFormatting.func_110646_a(event.message.func_150260_c());
 
     const buyResult = buyRegex.exec(message);
