@@ -4,22 +4,17 @@ import PDObject from "PersistentData";
 const DecimalFormat = Java.type("java.text.DecimalFormat");
 const EnumChatFormatting = Java.type("net.minecraft.util.EnumChatFormatting")
 
-// You purchased DOG SHIT for 1,000,000 coins!
-var buyRegex = /^You purchased (.+) for ([\d,]+) coins!$/
-// [Auction] Technoblade bought DOG SHIT for 1,000,000 coins CLICK
-var sellRegex = /^\[Auction] (\w{1,16}) bought (.+) for ([\d,]+) coins CLICK$/
+const buyRegex = /^You purchased (.+) for ([\d,]+) coins!$/
+const sellRegex = /^(.+) (\w{1,16}) collected an auction for ([\d,]+) coins!$/
+const salesRegex = /^\[Auction] (\w{1,16}) bought (.+) for ([\d,]+) coins CLICK$/
 
-var numberFormat = new DecimalFormat("###,###,###,###.##");
+const numberFormat = new DecimalFormat("###,###,###,###.##");
 
-var sellSound = new Sound({
-    "source": "sound.ogg"
-})
-
-var data = new PDObject("FlipTracker", {
+const data = new PDObject("FlipTracker", {
     coins: 0
 })
 
-var settings = new SettingsObject("FlipTracker", [
+const settings = new SettingsObject("FlipTracker", [
     {
         "name": "FlipTracker",
         settings: [
@@ -31,47 +26,53 @@ var settings = new SettingsObject("FlipTracker", [
         ]
     }
 ]);
-
 settings.setCommand("fliptracker");
-
 Setting.register(settings);
 
 register("renderOverlay", () => {
-    if(settings.getSetting("FlipTracker", "Show")) {
-        x = (Renderer.screen.getWidth() / 1000) * settings.getSetting("FlipTracker", "X Position");
-        y = (Renderer.screen.getHeight() / 1000) * settings.getSetting("FlipTracker", "Y Position");
+    const x = (Renderer.screen.getWidth() / 1000) * settings.getSetting("FlipTracker", "X Position");
+    const y = (Renderer.screen.getHeight() / 1000) * settings.getSetting("FlipTracker", "Y Position");
 
-        coins = numberFormat.format(data.coins);
+    const coins = numberFormat.format(data.coins);
 
-
-
-        Renderer.drawString(`${data.coins < 0 ? "&c" : "&a"}Flipping Profit: ${coins}`, x, y)
-    }
+    Renderer.drawString(`${data.coins < 0 ? "&c" : "&a"}Flipping Profit: ${coins}`, x, y)
 });
 
 register("chat", event => {
-    if(!settings.getSetting("FlipTracker", "Track")) return;
-    message = EnumChatFormatting.func_110646_a(event.message.func_150260_c());
+    const message = EnumChatFormatting.func_110646_a(event.message.func_150260_c());
 
-    buyResult = buyRegex.exec(message);
-    if (buyResult !== null) {
-        coins = Number(buyResult[2].replace(/,/g, ""));
+    const buyResult = buyRegex.exec(message);
+    if (buyResult != null) {
+		const coins = Number(buyResult[2].replace(/,/g, ""));
         if(!isNaN(coins)) {
-            data.coins -= coins
+            data.coins -= Number(coins)
         }
     }
-    sellResult = sellRegex.exec(message);
-    if (sellResult !== null) {
-        coins = Number(sellResult[3].replace(/,/g, ""));
+
+    const sellResult = sellRegex.exec(message);
+    if (sellResult != null) {
+		const coins = Number(sellResult[3].replace(/,/g, ""));
         if(!isNaN(coins)) {
             data.coins += coins
         }
+    }
+
+    const salesResult = salesRegex.exec(message);
+    if (salesResult !== null) {
         onSell();
     }
 });
 
 function onSell() {
     if(settings.getSetting("FlipTracker", "Sound on Sell")) {
+        const sellSound = new Sound({
+            "source": "sound.ogg"
+        })
+
         sellSound.play();
+
+        setTimeout(() => {
+            sellSound.stop();
+        }, 3000);
     }
 }
